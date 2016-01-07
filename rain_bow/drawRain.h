@@ -36,27 +36,37 @@
 #define GLUT_DISABLE_ATEXIT_HACK
 #include <GL/glut.h>
 #include <math.h>
+#include <stdarg.h>
 
 /****************************************************************************************
 *	Macro Define Section
 ****************************************************************************************/
-#define MAX_NUM_OF_NODE 100
-#define SMOOTH_DEGREE 100
+#define MAX_NUM_OF_NODE 100	//初始时链表结点数
+#define SMOOTH_DEGREE 32	//涟漪光滑程度
+
+#define WINDOW_WIDTH 1590	//窗口宽度
+#define WINDOW_HEIGHT 830	//窗口高度
+
 
 /****************************************************************************************
 *	Prototype Declare Section
 ****************************************************************************************/
 /****************************************************************************************
 *@Name............: void initRainScreen(void)
-*@Description.....: 对OpenGL进行初始化，使能各功能及放置光源等
+*@Description.....: 初始化绘雨场景
 *@Parameters......: void
 *@Return values...: void
 *@PreCondition....：需在绘图之前被调用，从而实现功能
 *@PostCondition...：无
 *****************************************************************************************/
 void InitRainScreen(void);
+
+//初始化全局世界
 void InitWorld(void);
+
+//初始化控制屏幕
 void InitControlScreen(void);
+
 /****************************************************************************************
 *@Name............: void ResizeDisplayScreen(int width, int height)
 *@Description.....: 控制窗口变化事件
@@ -67,19 +77,28 @@ void InitControlScreen(void);
 *@PostCondition...：无
 *****************************************************************************************/
 void ResizeDisplayScreen(int width, int height);
+
+//处理全局世界窗口改变事件
 void ResizeWorld(int width, int height);
+
+//处理控制屏幕窗口改变事件
 void ResizeControlScreen(int width, int height);
 /****************************************************************************************
-*@Name............: void displayRainScreen(void)
+*@Name............: void DisplayRainScreen(void)
 *@Description.....: 落雨场景显示函数
 *@Parameters......: void
 *@Return values...: void
 *@PreCondition....：无
 *@PostCondition...：无
 *****************************************************************************************/
-void DisplayControlScreen(void);
 void DisplayRainScreen(void);
+
+//绘制控制屏幕
+void DisplayControlScreen(void);
+
+//绘制全局世界
 void DisplayWorld(void);
+
 /****************************************************************************************
 *@Name............: void idle(void)
 *@Description.....: 空闲函数

@@ -21,34 +21,35 @@
 *	Include File Section
 ****************************************************************************************/
 #include "drawRain.h"
+
 int mainWindow;
 int controlWindow;
-int worldWindow;
+int rainWindow;
+GLuint GAP = (WINDOW_WIDTH / 40); //窗口之间的间隔
 
 int main(int argc, char **argv)
 {
 	glutInit(&argc, argv);
-	glutInitWindowSize(1920, 1080);
+	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutInitWindowPosition(0, 0);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	mainWindow = glutCreateWindow("池塘夜降彩色雨");
 	InitWorld();
 	glutReshapeFunc(ResizeWorld);
 	glutDisplayFunc(DisplayWorld);
-	glutKeyboardFunc(KeyBoard);
 
-	worldWindow = glutCreateSubWindow(mainWindow, 200, 0, 1720, 1080);
+	controlWindow = glutCreateSubWindow(mainWindow, GAP, GAP, WINDOW_WIDTH / 8, WINDOW_HEIGHT - GAP * 2);//创建控制屏幕窗口
+	InitControlScreen();
+	glutReshapeFunc(ResizeControlScreen);
+	glutDisplayFunc(DisplayControlScreen);
+
+	rainWindow = glutCreateSubWindow(mainWindow, GAP * 2 + 200, GAP, WINDOW_WIDTH - GAP * 4 - WINDOW_WIDTH / 8, WINDOW_HEIGHT - GAP * 2);//创建落雨场景窗口
 	InitRainScreen();
 	glutReshapeFunc(ResizeDisplayScreen);
 	glutDisplayFunc(DisplayRainScreen);
 	glutKeyboardFunc(KeyBoard);
 
-	controlWindow = glutCreateSubWindow(mainWindow, 0, 0, 200, 1080);
-	InitControlScreen();
-	glutReshapeFunc(ResizeControlScreen);
-	glutDisplayFunc(DisplayControlScreen);
 	glutIdleFunc(Idle);
-
 	glutMainLoop();
 	
 	return EXIT_SUCCESS;
