@@ -22,7 +22,7 @@
 ****************************************************************************************/
 #include "drawRain.h"
 #include <windows.h>
-#pragma warning(disable: 4996)
+
 /*****************************************************************************************
 *	Global Variable Declare Section
 *****************************************************************************************/
@@ -53,7 +53,6 @@ extern int rainWindow;
 extern GLuint GAP;
 
 GLuint subWidth, subHeight;
-GLvoid *font_style = GLUT_BITMAP_TIMES_ROMAN_10;
 /****************************************************************************************
 *	Function Define Section
 ****************************************************************************************/
@@ -142,7 +141,7 @@ void ResizeWorld(int width, int height)
 
 	subWidth = width / 8;
 	subHeight = height - 2 * GAP;
-	GAP = width / 40;
+	GAP = width * height / 100000 + 12;
 
 	/*当窗口改变时，调节各窗口大小*/
 	glutSetWindow(controlWindow);
@@ -172,43 +171,6 @@ void DrawCircle(double radius)
 	for (int j = 0; j < SMOOTH_DEGREE; ++j)
 		glVertex2f(radius * cos(2 * PI / SMOOTH_DEGREE * j), radius * sin(2 * PI / SMOOTH_DEGREE * j));
 	glEnd();
-}
-
-void
-setfont(char* name, int size)
-{
-	font_style = GLUT_BITMAP_HELVETICA_10;
-	if (strcmp(name, "helvetica") == 0) {
-		if (size == 12)
-			font_style = GLUT_BITMAP_HELVETICA_12;
-		else if (size == 18)
-			font_style = GLUT_BITMAP_HELVETICA_18;
-	}
-	else if (strcmp(name, "times roman") == 0) {
-		font_style = GLUT_BITMAP_TIMES_ROMAN_10;
-		if (size == 24)
-			font_style = GLUT_BITMAP_TIMES_ROMAN_24;
-	}
-	else if (strcmp(name, "8x13") == 0) {
-		font_style = GLUT_BITMAP_8_BY_13;
-	}
-	else if (strcmp(name, "9x15") == 0) {
-		font_style = GLUT_BITMAP_9_BY_15;
-	}
-}
-
-void drawstr(GLuint x, GLuint y, char* format, ...)
-{
-	va_list args;
-	char buffer[255], *s;
-
-	va_start(args, format);
-	vsprintf(buffer, format, args);
-	va_end(args);
-
-	glRasterPos2i(x, y);
-	for (s = buffer; *s; s++)
-		glutBitmapCharacter(font_style, *s);
 }
 
 /****************************************************************************************
@@ -260,7 +222,7 @@ void DisplayRainScreen(void)
 			if (TRUE == IsTouchWater(dat.rainDrop))//根据落水坐标判断是否该转换成生成涟漪的状态
 			{
 				ChangeRainStateToMelting(dat.rainDrop);
-				Beep(500, 30);//水滴有声
+				//Beep(500, 30);//水滴有声
 			}
 				
 			UpdateListNode(&L, i, increaseCoord);//更新结点数据
@@ -298,23 +260,26 @@ void DisplayRainScreen(void)
 	glutSwapBuffers();
 }
 
+//绘制全局世界
 void DisplayWorld(void)
 {
 	glClearColor(0.85, 0.85, 0.85, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//清除背景
 	glColor3ub(1, 0, 0);
-	setfont("helvetica", 12);
-	drawstr(GAP, GAP - 5, "Control Screen");
-	drawstr(GAP * 2 + subWidth, GAP - 5, "Rain Screen");
+	setFont("helvetica", (GAP >= 18 ? 18 : 12));
+	drawstr(GAP, GAP - 4, "Control Screen");
+	drawstr(GAP * 2 + subWidth, GAP - 4, "Rain Screen");
 	glutSwapBuffers();
 }
 
+//绘制控制屏幕
 void DisplayControlScreen(void)
 {
 	glClearColor(0.7, 0.7, 0.7, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//清除背景
 	glutSwapBuffers();
 }
+
 /****************************************************************************************
 *@Name............: void idle(void)
 *@Description.....: 空闲函数

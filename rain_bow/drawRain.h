@@ -36,7 +36,7 @@
 #define GLUT_DISABLE_ATEXIT_HACK
 #include <GL/glut.h>
 #include <math.h>
-#include <stdarg.h>
+#include "displayOthers.h"
 
 /****************************************************************************************
 *	Macro Define Section

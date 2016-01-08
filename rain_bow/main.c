@@ -25,7 +25,7 @@
 int mainWindow;
 int controlWindow;
 int rainWindow;
-GLuint GAP = (WINDOW_WIDTH / 40); //窗口之间的间隔
+GLuint GAP = (WINDOW_WIDTH * WINDOW_HEIGHT / 100000) + 12; //窗口之间的间隔
 
 int main(int argc, char **argv)
 {
