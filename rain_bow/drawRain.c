@@ -41,6 +41,11 @@ const GLfloat moonDiffuse[] = { 0.5, 0.5, 0.5, 1.0 };
 const GLfloat moonSpecular[] = { 0.5, 0.5, 0.5, 1.0 };
 const GLfloat moonPosition [] = { -300.0, 300.0, -100.0, 0.0 };
 
+//照相机位置
+GLfloat eye[3] = { 0.0, 0.0, 30.0 };
+GLfloat at[3] = { 0.0, 0.0, 0.0 };
+GLfloat up[3] = { 0.0, 1.0, 0.0 };
+
 static float windSpeed = 1.0;			//风速
 static double increaseCoord = 0.5;		//坐标增量
 static double increaseRadius = 0.05;	//半径增量
@@ -126,7 +131,7 @@ void ResizeDisplayScreen(int width, int height)
 	gluPerspective(120.0, (GLfloat)width / (GLfloat)height, 1.0, 1000.0);//设置透视视景体
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	gluLookAt(0.0, 10.0, 40.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);//设置相机位置
+	gluLookAt(eye[0], eye[1], eye[2], at[0], at[1], at[2], up[0], up[1], up[2]);//设置相机位置
 }
 
 //控制全局窗口改变事件
@@ -311,5 +316,57 @@ void KeyBoard(unsigned char key, int x, int y)
 		case 27://按下"Esc"则退出
 			exit(0);
 			break;
+		case 'w':
+			eye[2] -= 0.5;
+			at[2] -= 0.5;
+			RedisplayAll();
+			break;
+		case 's':
+			eye[2] += 0.5;
+			at[2] += 0.5;
+			RedisplayAll();
+			break;
+		default:
+			break;
 	}
+}
+
+void SpecialKeyBoard(unsigned char key, int x, int y)
+{
+	switch (key)
+	{
+		case GLUT_KEY_UP: //向上箭头，表示人物向上移动
+			eye[1] += 0.5;
+			at[1] += 0.5;
+			RedisplayAll();
+			break;
+		case GLUT_KEY_DOWN: //向下箭头，表示人物向地下移动
+			eye[1] -= 0.5;
+			at[1] -= 0.5;
+			RedisplayAll();
+			break;
+		case GLUT_KEY_LEFT:
+			eye[0] -= 0.5;
+			at[0] -= 0.5;
+			RedisplayAll();
+			break;
+		case GLUT_KEY_RIGHT:
+			eye[0] += 0.5;
+			at[0] += 0.5;
+			RedisplayAll();
+			break;
+		default:
+			break;
+	}
+}
+void RedisplayAll(void)
+{
+	/*当窗口改变时，调节各窗口大小*/
+	/*glutSetWindow(controlWindow);
+	ResizeControlScreen(subWidth, subHeight);
+	glutPostRedisplay();*/
+
+	glutSetWindow(rainWindow);
+	ResizeDisplayScreen(1600 - GAP * 4 - subWidth, subHeight);
+	glutPostRedisplay();
 }

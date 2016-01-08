@@ -48,6 +48,7 @@ int main(int argc, char **argv)
 	glutReshapeFunc(ResizeDisplayScreen);
 	glutDisplayFunc(DisplayRainScreen);
 	glutKeyboardFunc(KeyBoard);
+	glutSpecialFunc(SpecialKeyBoard);
 
 	glutIdleFunc(Idle);
 	glutMainLoop();

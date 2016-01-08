@@ -98,7 +98,7 @@ void DisplayControlScreen(void);
 
 //绘制全局世界
 void DisplayWorld(void);
-
+void RedisplayAll(void);
 /****************************************************************************************
 *@Name............: void idle(void)
 *@Description.....: 空闲函数
@@ -121,4 +121,5 @@ void DrawCircle(double radius);
 *@PostCondition...：无
 *****************************************************************************************/
 void KeyBoard(unsigned char key, int x, int y);
+void SpecialKeyBoard(unsigned char key, int x, int y);
 #endif
