@@ -42,6 +42,7 @@ int main(int argc, char **argv)
 	InitControlScreen();
 	glutReshapeFunc(ResizeControlScreen);
 	glutDisplayFunc(DisplayControlScreen);
+	glutMouseFunc(MouseMotion);
 
 	rainWindow = glutCreateSubWindow(mainWindow, GAP * 2 + 200, GAP, WINDOW_WIDTH - GAP * 4 - WINDOW_WIDTH / 8, WINDOW_HEIGHT - GAP * 2);//创建落雨场景窗口
 	InitRainScreen();

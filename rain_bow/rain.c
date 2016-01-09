@@ -126,9 +126,9 @@ Status SetRainDropAttribute(RainDrop *rainDrop, float windSpeed)
 	/*
 	**设置雨滴属性值
 	*/
-	rainDrop->xCoord = 150 - (0.1 * (rand() % 3000));
-	rainDrop->yCoord = 100.0 + (0.1 * (rand() % 1000));
-	rainDrop->zCoord = 100.0 - (0.1 * (rand() % 1000));
+	rainDrop->xCoord = 300 - (0.1 * (rand() % 6000));
+	rainDrop->yCoord = 200.0 + (0.1 * (rand() % 2000));
+	rainDrop->zCoord = 300.0 - (0.1 * (rand() % 6000));
 	rainDrop->lengthOfRain = (double)(MIN_LENGTH_OF_RAINDROP + rand() % MAX_LENGTH_OF_RAINDROP);
 	rainDrop->widthOfRain = (double)(MIN_WIDTH_OF_RAINDROP + rand() % MAX_WIDTH_OF_RAINDROP);
 	rainDrop->rainState = Falling;
@@ -157,8 +157,8 @@ Status SetRainDropAttribute(RainDrop *rainDrop, float windSpeed)
 Status SetRipple(Ripple *ripple, double widthOfRain, double lengthOfRain)
 {
 	//设置涟漪最小及最大半径
-	ripple->minRadius = (int)(widthOfRain + lengthOfRain) % 2 + 0.5;
-	ripple->maxRadius = ripple->minRadius + 2;
+	ripple->minRadius = (int)(widthOfRain + lengthOfRain) % 3 + 0.5;
+	ripple->maxRadius = ripple->minRadius + 4;
 	ripple->radius = ripple->minRadius;
 
 	return SUCCESS;

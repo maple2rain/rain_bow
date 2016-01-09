@@ -41,8 +41,8 @@
 /****************************************************************************************
 *	Macro Define Section
 ****************************************************************************************/
-#define MAX_NUM_OF_NODE 100	//初始时链表结点数
-#define SMOOTH_DEGREE 32	//涟漪光滑程度
+#define MAX_NUM_OF_NODE 1000	//初始时链表结点数
+#define SMOOTH_DEGREE 64	//涟漪光滑程度
 
 #define WINDOW_WIDTH 1590	//窗口宽度
 #define WINDOW_HEIGHT 830	//窗口高度
@@ -121,5 +121,10 @@ void DrawCircle(double radius);
 *@PostCondition...：无
 *****************************************************************************************/
 void KeyBoard(unsigned char key, int x, int y);
+
+//特殊按键，特指数字和字母外的一些功能键
 void SpecialKeyBoard(unsigned char key, int x, int y);
+//鼠标按键点击事件
+void MouseMotion(int button, int state, int x, int y);
+
 #endif
