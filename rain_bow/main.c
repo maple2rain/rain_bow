@@ -14,7 +14,7 @@
 *--------------------------------Revision History--------------------------------------
 *	No	version		Data		Revised By			Item			Description
 *	1.0							LPF									first coding
-*
+*	
 ***************************************************************************************/
 
 /****************************************************************************************
@@ -33,7 +33,7 @@ int main(int argc, char **argv)
 	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutInitWindowPosition(0, 0);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-	mainWindow = glutCreateWindow("≥ÿÃ¡“πΩµ≤ …´”Í");
+	mainWindow = glutCreateWindow("≈„ƒ„»•ø¥¡˜–«”Í");
 	InitWorld();
 	glutReshapeFunc(ResizeWorld);
 	glutDisplayFunc(DisplayWorld);

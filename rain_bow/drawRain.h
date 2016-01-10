@@ -124,6 +124,7 @@ void KeyBoard(unsigned char key, int x, int y);
 
 //特殊按键，特指数字和字母外的一些功能键
 void SpecialKeyBoard(unsigned char key, int x, int y);
+
 //鼠标按键点击事件
 void MouseMotion(int button, int state, int x, int y);
 

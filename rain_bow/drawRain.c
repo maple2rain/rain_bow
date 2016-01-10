@@ -23,6 +23,16 @@
 #include "drawRain.h"
 #include <windows.h>
 
+/****************************************************************************************
+*	Struct Define Section
+****************************************************************************************/
+//荷叶结构体
+typedef struct leave {
+	double x;			//x坐标
+	double z;			//z坐标
+	double radius;		//半径
+	double curvature;	//曲率
+}leave;
 /*****************************************************************************************
 *	Global Variable Declare Section
 *****************************************************************************************/
@@ -62,17 +72,18 @@ GLfloat up[3] = { 0.0, 1.0, 0.0 };
 
 /*
 **按钮左上角和右下角坐标
-**第一列为Thunder坐标
-**第二列和第四列为移动速度加减速度按钮
-**第三列和第五列为风速加减按钮
+**第一为Thunder坐标
+**第二和第五为移动速度加减速度按钮
+**第三和第六为风速加减按钮
+**第四和第七位增减雨滴数目按钮
 */
-GLuint buttonCoord[5][4];
+GLuint buttonCoord[7][4];
 GLuint buttonIndex = 0;		//被按下的按钮序数
 
 static float windSpeed = 1.0;			//风速
 static double increaseCoord = 0.5;		//坐标增量
 static double increaseRadius = 0.05;	//半径增量
-static int density = 1;					//雨滴密度,至少为1
+static int density = 10;					//雨滴密度,至少为1
 static List L;
 
 extern int mainWindow;		//主窗口
@@ -135,6 +146,7 @@ void InitControlScreen(void)
 {
 	glClearColor(0.3, 0.3, 0.3, 1.0);
 }
+
 /****************************************************************************************
 *@Name............: void ResizeDisplayScreen(int width, int height)
 *@Description.....: 控制窗口变化事件
@@ -175,17 +187,17 @@ void ResizeWorld(int width, int height)
 	GAP = width * height / 100000 + 12;
 	
 	/*设置按钮坐标*/
-	for (int i = 0; i < 3; ++i)
+	for (int i = 0; i < 4; ++i)
 	{
 		buttonCoord[i][0] = GAP / 2.0;
 		buttonCoord[i][1] = GAP / 2.0 + i * GAP * 2;
 		buttonCoord[i][2] = subWidth / 2 - GAP / 2.0;
 		buttonCoord[i][3] = buttonCoord[i][1] + GAP * 1.5;
 	}
-	for (int i = 3; i < 5; ++i)
+	for (int i = 4; i < 7; ++i)
 	{
 		buttonCoord[i][0] = buttonCoord[0][2] + GAP;
-		buttonCoord[i][1] = buttonCoord[i - 2][1];
+		buttonCoord[i][1] = buttonCoord[i - 3][1];
 		buttonCoord[i][2] = subWidth - GAP / 2.0;
 		buttonCoord[i][3] = buttonCoord[i][1] + GAP * 1.5;
 	}
@@ -259,7 +271,7 @@ void DrawWater(void)
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, waterDiffuse);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, waterAmbient);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
-	glTranslatef(0.0, -increaseCoord - 1.0, 0.0);
+	glTranslatef(0.0, -increaseCoord - 2.0, 0.0);
 	glRotatef(90.0, 1.0, 0.0, 0.0);
 	glNormal3f(0.0, 1.0, 0.0);
 	glRectd(-1000.0, -1000.0, 1000.0, 1000.0);
@@ -282,8 +294,17 @@ void DisplayRainScreen(void)
 	DrawMoon();//绘制月亮
 	DrawWater();//绘制水平面
 	DrawSolidCircle(10.0, 10.0, 20.0, 3.0);//绘制椭圆，需要计算椭圆中心以便求得雨滴是否与其碰撞
+
+	if(rand() % 100 > 50)
+	for (int j = 0; j < density; ++j)//预置雨滴
+	{
+		CreateData(&dat, windSpeed);
+		InseartList(&L, dat);
+	}
+
 	for (int i = 1; i <= L.num; ++i)
 	{
+		
 		GetListIndexNode(&L, i, &dat);
 
 		/*设置雨滴材料*/
@@ -326,11 +347,11 @@ void DisplayRainScreen(void)
 			if (TRUE == IsRadiusEqualToMax(dat.ripple))//判断是否更新结点状态
 			{
 				ChangeRainStateToDying(dat.rainDrop);
-				for (int j = 0; j < density; ++j)//预置雨滴
-				{
-					CreateData(&dat, windSpeed);
-					InseartList(&L, dat);
-				}
+				//for (int j = 0; j < density && rand() % 1000 > 980; ++j)//预置雨滴
+				//{
+				//	CreateData(&dat, windSpeed);
+				//	InseartList(&L, dat);
+				//}
 			}
 				
 		}
@@ -361,13 +382,13 @@ void DisplayWorld(void)
 //绘制控制屏幕
 void DisplayControlScreen(void)
 {
-	char *str[] = { "Thunder", "Speed -", "Wind -", "Speed +", "Wind +" };
+	char *str[] = { "Thunder", "Speed -", "Wind -", "Rain -", "Speed +", "Wind +", "Rain +"};
 	glClearColor(0.7, 0.7, 0.7, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//清除背景
 	setFont("helvetica", (GAP >= 18 ? 18 : 12));
 
 	/*显示按钮*/
-	for (int i = 0; i < 5; ++i)
+	for (int i = 0; i < 7; ++i)
 	{
 		glColor3f(0.9, 0.9, 0.9);
 		glRectd(buttonCoord[i][0], buttonCoord[i][1], buttonCoord[i][2], buttonCoord[i][3]);
@@ -382,6 +403,7 @@ void DisplayControlScreen(void)
 
 	/*显示镜头坐标*/
 	glColor3f(0.0, 0.0, 0.0);
+	drawstr(12, subHeight - 300, "Number Of Rain: %d", L.num);
 	drawstr(12, subHeight - 250, "rainFallingSpeed:");
 	drawstr(12, subHeight - 200, "eyes:");
 	drawstr(12, subHeight - 100, "at:");
@@ -430,19 +452,23 @@ void KeyBoard(unsigned char key, int x, int y)
 			exit(0);
 			break;
 		case 'w':	//向前移动
-			eye[2] -= moveSpeed;
+			eye[2] -= cos(PI - φ) * moveSpeed;
+			eye[0] += sin(PI - φ) * moveSpeed;
 			RedisplayAll();
 			break;
 		case 's':	//向后移动
-			eye[2] += moveSpeed;
+			eye[2] += cos(PI - φ) * moveSpeed;
+			eye[0] -= sin(PI - φ) * moveSpeed;
 			RedisplayAll();
 			break;
 		case 'a':	//向左移动
-			eye[0] -= moveSpeed;
+			eye[0] -= sin(φ - PI / 2) * moveSpeed;
+			eye[2] -= cos(φ - PI / 2) * moveSpeed;
 			RedisplayAll();
 			break;
-		case 'd': //向右移动
-			eye[0] += moveSpeed;
+		case 'd':	//向右移动
+			eye[0] += sin(φ - PI / 2) * moveSpeed;
+			eye[2] += cos(φ - PI / 2) * moveSpeed;
 			RedisplayAll();
 			break;
 		case '8'://向上眺望
@@ -522,29 +548,52 @@ void MouseMotion(int button, int state, int x, int y)
 			{
 				buttonIndex = 1;
 			}
-			else if (y >= buttonCoord[1][1] && y <= buttonCoord[1][3])//第一行按钮
+			else if (y >= buttonCoord[1][1] && y <= buttonCoord[1][3])//第二行按钮
 			{
 				buttonIndex = 2;
 				if (moveSpeed >= 0.2)
 					moveSpeed -= 0.1;
+				if (rotateSpeed > PI / 180)
+					rotateSpeed -= PI / 24;
 			}
-			else if (y >= buttonCoord[2][1] && y <= buttonCoord[2][3])//第一行按钮
+			else if (y >= buttonCoord[2][1] && y <= buttonCoord[2][3])//第三行按钮
 			{
 				buttonIndex = 3;
 				windSpeed -= 0.01;
 			}
-		}
-		else if (x >= buttonCoord[3][0] && x <= buttonCoord[3][2])//右边一列的按钮
-		{
-			if (y >= buttonCoord[3][1] && y <= buttonCoord[3][3])//第一行按钮
+			else if (y >= buttonCoord[3][1] && y <= buttonCoord[3][3])//第四行按钮
 			{
 				buttonIndex = 4;
-				moveSpeed += 0.1;
+				for (int i = 1; i < 50; ++i)
+				{
+					DeleteList(&L, 1);
+				}
 			}
-			else if (y >= buttonCoord[4][1] && y <= buttonCoord[4][3])//第一行按钮
+		}
+		else if (x >= buttonCoord[4][0] && x <= buttonCoord[4][2])//右边一列的按钮
+		{
+			if (y >= buttonCoord[4][1] && y <= buttonCoord[4][3])//第一行按钮
 			{
 				buttonIndex = 5;
+				moveSpeed += 0.1;
+				if (rotateSpeed < PI / 24)
+					rotateSpeed += PI / 24;
+			}
+			else if (y >= buttonCoord[5][1] && y <= buttonCoord[5][3])//第二行按钮
+			{
+				buttonIndex = 6;
 				windSpeed += 0.01;
+			}
+			else if (y >= buttonCoord[6][1] && y <= buttonCoord[6][3])//第三行按钮
+			{
+				ListNode dat;
+				buttonIndex = 7;
+				/*新增结点*/
+				for (int i = 0; i < 50; ++i)
+				{
+					CreateData(&dat, windSpeed);
+					InseartList(&L, dat);
+				}
 			}
 		}
 		RedisplayAll();
