@@ -37,17 +37,18 @@
 #include <GL/glut.h>
 #include <math.h>
 #include "displayOthers.h"
-
+#include "thunder.h"
 /****************************************************************************************
 *	Macro Define Section
 ****************************************************************************************/
 #define MAX_NUM_OF_NODE 1000	//初始时链表结点数
-#define SMOOTH_DEGREE 64	//涟漪光滑程度
+#define MAX_NUM_OF_LEAVES 30	//荷叶数目
+#define SMOOTH_DEGREE 64		//涟漪光滑程度
 
-#define WINDOW_WIDTH 1590	//窗口宽度
-#define WINDOW_HEIGHT 830	//窗口高度
+#define WINDOW_WIDTH 1590		//窗口宽度
+#define WINDOW_HEIGHT 830		//窗口高度
 
-
+typedef struct leave leave;
 /****************************************************************************************
 *	Prototype Declare Section
 ****************************************************************************************/
@@ -112,6 +113,17 @@ void Idle(void);
 //根据半径radius画椭圆
 void DrawCircle(double radius);
 
+//设置荷叶属性
+void SetLeavesAttribute(leave leaves[], int num);
+
+//绘制荷叶
+void DrawLeaves(leave leaves[]);
+
+//绘制闪电
+void DrawThunder(Thunders *thunders);
+
+//根据半径radius,曲率curvature及x、z坐标画实心椭圆
+void DrawSolidCircle(double x, double z, double radius, double curvature, int lineGap);
 /****************************************************************************************
 *@Name............: void keyBoard(unsigned char key, int x, int y)
 *@Description.....: 按键处理函数

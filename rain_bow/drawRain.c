@@ -32,7 +32,9 @@ typedef struct leave {
 	double z;			//z坐标
 	double radius;		//半径
 	double curvature;	//曲率
+	int lineGap;		//荷叶黑线之间的间隔
 }leave;
+
 /*****************************************************************************************
 *	Global Variable Declare Section
 *****************************************************************************************/
@@ -46,7 +48,7 @@ const GLfloat local_view[] = { GL_TRUE };
 /*月亮属性*/
 GLfloat shininess[] = { 100.0 };
 const GLfloat moonEmission[] = { 0.0, 0.0, 0.0, 1.0 };
-const GLfloat moonAmbient[] = { 0.9, 0.9, 0.9, 1.0 };
+const GLfloat moonAmbient[] = { 0.9, 0.9, 0.7, 1.0 };
 const GLfloat moonDiffuse[] = { 0.5, 0.5, 0.5, 1.0 };
 const GLfloat moonSpecular[] = { 0.5, 0.5, 0.5, 1.0 };
 const GLfloat moonPosition [] = { -300.0, 300.0, -100.0, 0.0 };
@@ -60,6 +62,7 @@ const GLfloat waterSpecular[] = { 0.5, 0.5, 0.5, 1.0 };
 const GLfloat leaveAmbient[] = { 0.2, 0.6, 0.2, 1.0 };
 const GLfloat leaveDiffuse[] = { 0.5, 0.5, 0.5, 1.0 };
 const GLfloat leaveSpecular[] = { 0.5, 0.5, 0.5, 1.0 };
+leave leaves[MAX_NUM_OF_LEAVES];
 
 //照相机属性
 double Θ = PI / 2;						//球坐标系旋转角度
@@ -69,6 +72,8 @@ GLfloat sightDistance = 10.0;			//眼睛注视的距离
 GLfloat eye[3] = { 0.0, 10.0, 0.0 };
 GLfloat at[3] = { 0.0, 0.0, 0.0 };
 GLfloat up[3] = { 0.0, 1.0, 0.0 };
+unsigned int timeCount = 0;
+#define TIME_COUNT 100
 
 /*
 **按钮左上角和右下角坐标
@@ -76,22 +81,27 @@ GLfloat up[3] = { 0.0, 1.0, 0.0 };
 **第二和第五为移动速度加减速度按钮
 **第三和第六为风速加减按钮
 **第四和第七位增减雨滴数目按钮
+**第八为狂风坐标
 */
-GLuint buttonCoord[7][4];
+GLuint buttonCoord[8][4];
 GLuint buttonIndex = 0;		//被按下的按钮序数
 
+int timesOfImpacting = 0;				//雨滴与荷叶碰撞次数
 static float windSpeed = 1.0;			//风速
-static double increaseCoord = 0.5;		//坐标增量
+static double increaseCoord = 10.0;		//坐标增量
 static double increaseRadius = 0.05;	//半径增量
-static int density = 10;					//雨滴密度,至少为1
+static int density = 10;				//雨滴密度,至少为1
 static List L;
 
+Thunders thunders;			//闪电链表
+int IsThunder = 0;			//判断是否闪电
+int IsWildWind = 0;			//判断是否狂风骤雨
 extern int mainWindow;		//主窗口
 extern int controlWindow;	//控制台
 extern int rainWindow;		//雨中场景窗口
 extern GLuint GAP;			//间隔
 
-GLfloat moveSpeed = 0.5;	//前进速度 
+GLfloat moveSpeed = 1.0;	//前进速度 
 GLuint subWidth, subHeight;	//控制台子窗口宽度和高度
 /****************************************************************************************
 *	Function Define Section
@@ -107,6 +117,7 @@ GLuint subWidth, subHeight;	//控制台子窗口宽度和高度
 void InitRainScreen(void)
 {
 	ListNode data[MAX_NUM_OF_NODE];
+	
 	srand((unsigned)time(NULL));
 
 	glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -133,6 +144,13 @@ void InitRainScreen(void)
 	InitList(&L);
 	CreateDataArray(data, MAX_NUM_OF_NODE, windSpeed);
 	CreateList(&L, data, MAX_NUM_OF_NODE);
+
+	for (int i = 0; i < MAX_NUM_OF_LEAVES; ++i)
+	{
+		SetLeavesAttribute(leaves, MAX_NUM_OF_LEAVES);
+	}
+
+	InitThunderList(&thunders);
 }
 
 //初始化全局世界
@@ -183,7 +201,7 @@ void ResizeWorld(int width, int height)
 	glLoadIdentity();
 
 	subWidth = width / 8;
-	subHeight = height - 2 * GAP;
+	subHeight = height - 2 * GAP;//可能会造成子窗口高度为负数
 	GAP = width * height / 100000 + 12;
 	
 	/*设置按钮坐标*/
@@ -191,16 +209,22 @@ void ResizeWorld(int width, int height)
 	{
 		buttonCoord[i][0] = GAP / 2.0;
 		buttonCoord[i][1] = GAP / 2.0 + i * GAP * 2;
-		buttonCoord[i][2] = subWidth / 2 - GAP / 2.0;
+		buttonCoord[i][2] = subWidth / 2 - GAP / 3.0;
 		buttonCoord[i][3] = buttonCoord[i][1] + GAP * 1.5;
 	}
 	for (int i = 4; i < 7; ++i)
 	{
-		buttonCoord[i][0] = buttonCoord[0][2] + GAP;
+		buttonCoord[i][0] = buttonCoord[0][2] + GAP / 2.0;
 		buttonCoord[i][1] = buttonCoord[i - 3][1];
-		buttonCoord[i][2] = subWidth - GAP / 2.0;
+		buttonCoord[i][2] = subWidth - GAP / 3.0;
 		buttonCoord[i][3] = buttonCoord[i][1] + GAP * 1.5;
 	}
+
+	//狂风骤雨坐标
+	buttonCoord[7][0] = buttonCoord[0][2] + GAP / 2.0;
+	buttonCoord[7][1] = GAP / 2.0;
+	buttonCoord[7][2] = subWidth - GAP / 3.0;
+	buttonCoord[7][3] = buttonCoord[7][1] + GAP * 1.5;
 
 	/*当窗口改变时，调节各窗口大小*/
 	glutSetWindow(controlWindow);
@@ -232,21 +256,60 @@ void DrawCircle(double radius)
 	glEnd();
 }
 
-//根据半径radius,曲率curvature及x、z坐标画实心椭圆
-void DrawSolidCircle(double x, double z, double radius, double curvature)
+//设置荷叶属性
+void SetLeavesAttribute(leave leaves[], int num)
 {
+	for (int i = 0; i < num; ++i)
+	{
+		leaves[i].x = 300 - (0.1 * (rand() % 6000));
+		leaves[i].z = 300 - (0.1 * (rand() % 6000));
+		leaves[i].radius = rand() % 20 + 5.0;
+		leaves[i].curvature = rand() % 5 + 1.5;
+		leaves[i].lineGap = SMOOTH_DEGREE * 2 / leaves[i].radius;
+	}
+}
+
+//根据半径radius,曲率curvature及x、z坐标画实心椭圆
+void DrawSolidCircle(double x, double z, double radius, double curvature, int lineGap)
+{
+	float dotAmbient[] = { 0.0, 0.1, 0.1, 1.0 };
+	float dotDiffuse[] = { 0.0, 0.0, 0.0, 1.0 };
+	float dotSpecular[] = { 0.0, 0.0, 0.0, 1.0 };
 	glPushMatrix();
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, leaveSpecular);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, leaveDiffuse);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, leaveAmbient);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
-	glTranslatef(0.0, -increaseCoord, 0.0);
+	glTranslatef(0.0, -radius / 25.0, 0.0);
 	glRotatef(90.0, 1.0, 0.0, 0.0);
-	glBegin(GL_TRIANGLE_FAN);
+
+	glBegin(GL_TRIANGLE_FAN);//绘制椭圆代替荷叶
 	for (int j = 0; j < SMOOTH_DEGREE; ++j)
 		glVertex2f(x + radius * cos(2 * PI / SMOOTH_DEGREE * j), z + radius * sin(2 * PI / SMOOTH_DEGREE * j) / curvature);
 	glEnd();
+
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, dotAmbient);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, dotDiffuse);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, dotSpecular);
+
+	for (int j = 0; j < SMOOTH_DEGREE; j += lineGap) 
+	{
+		glBegin(GL_LINES);//绘制黑线
+		glVertex2f(x + radius * cos(2 * PI / SMOOTH_DEGREE * j), z + radius * sin(2 * PI / SMOOTH_DEGREE * j) / curvature);
+		glVertex2f(x, z);
+		glEnd();
+	}
+
 	glPopMatrix();
+}
+
+//绘制荷叶
+void DrawLeaves(leave leaves[])
+{
+	for (int i = 0; i < MAX_NUM_OF_LEAVES; ++i)
+	{
+		DrawSolidCircle(leaves[i].x, leaves[i].z, leaves[i].radius, leaves[i].curvature, leaves[i].lineGap);
+	}
 }
 
 //绘制月亮
@@ -277,6 +340,78 @@ void DrawWater(void)
 	glRectd(-1000.0, -1000.0, 1000.0, 1000.0);
 	glPopMatrix();
 }
+
+//绘制闪电
+void DrawThunder(Thunders *thunders)
+{
+	ThunderTreeList treeList;
+	double coordHeadTree[3];
+	GLfloat thunderAmbient[] = { 0.9, 0.9, 0.2, 1.0 };
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, thunderAmbient);
+	
+	for (int i = 1; i <= thunders->numOfThunder; ++i)
+	{
+		int num = 0;
+		GetIndexThunders(thunders, i, &treeList);
+		glLineWidth((GLfloat)treeList.numOfTree / 3.0);		
+		if (0 == treeList.flag)//根据访问到的结点数依次展开闪电树
+		{
+			IncreaseThunderTreeVisitTimes(thunders, i);
+			if (treeList.visitTimes + 1 == treeList.numOfAllNodes)
+				ChangeThunderTreeFlag(thunders, i);
+		}
+		else 
+		{
+			DecreaseThunderTreeVisitTimes(thunders, i);;//依次消逝闪电
+			if (0 == treeList.visitTimes)
+			{
+				DeleteThunder(thunders, i);
+				if (thunders->numOfThunder == 0)
+				{
+					IsThunder = 0;
+					if (NULL == PlaySound(TEXT("E:\\OpenGL\\VS\\rain_bow\\rain.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP))//异步播放音乐
+						printf("NULL");
+				}
+					
+				break;
+			}
+		}
+
+		for (int j = 1; j <= treeList.numOfTree; ++j)
+		{
+			ThunderNodeList thunderNodeList;
+			double coordTree[3];
+			double coordBenchHead[3];
+			
+			GetIndexThunderTree(&treeList, j, coordTree, &thunderNodeList);
+			if (j > 1)
+			{
+				glBegin(GL_LINES);
+				glVertex3dv(coordHeadTree);
+				glVertex3dv(coordTree);
+				glEnd();
+				if (++num > treeList.visitTimes)
+					break;
+			}
+
+			memcpy(coordHeadTree, coordTree, sizeof(coordHeadTree));//coordHead保留分支的每个点，也即每次绘制的初始点
+			memcpy(coordBenchHead, coordTree, sizeof(coordBenchHead));//coordHead保留分支的每个点，也即每次绘制的初始点
+
+			for (int k = 1; k <= thunderNodeList.numOfNode; ++k)
+			{
+				double coordEnd[3];
+				GetIndexThunderNode(&thunderNodeList, k, coordEnd);
+				glBegin(GL_LINES);
+				glVertex3dv(coordBenchHead);
+				glVertex3dv(coordEnd);
+				glEnd();
+				memcpy(coordBenchHead, coordEnd, sizeof(coordBenchHead));
+				if (++num > treeList.visitTimes)
+					break;
+			}
+		}
+	}
+}
 /****************************************************************************************
 *@Name............: void DisplayRainScreen(void)
 *@Description.....: 落雨场景显示函数
@@ -293,9 +428,11 @@ void DisplayRainScreen(void)
 
 	DrawMoon();//绘制月亮
 	DrawWater();//绘制水平面
-	DrawSolidCircle(10.0, 10.0, 20.0, 3.0);//绘制椭圆，需要计算椭圆中心以便求得雨滴是否与其碰撞
+	DrawLeaves(leaves);//绘制椭圆代替荷叶，需要计算椭圆中心以便求得雨滴是否与其碰撞
+	if (IsThunder)
+		DrawThunder(&thunders);
 
-	if(rand() % 100 > 50)
+	if(increaseCoord > 0.01 && rand() % 100 > 50)
 	for (int j = 0; j < density; ++j)//预置雨滴
 	{
 		CreateData(&dat, windSpeed);
@@ -304,7 +441,6 @@ void DisplayRainScreen(void)
 
 	for (int i = 1; i <= L.num; ++i)
 	{
-		
 		GetListIndexNode(&L, i, &dat);
 
 		/*设置雨滴材料*/
@@ -314,53 +450,78 @@ void DisplayRainScreen(void)
 		glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, GetRainDropShininess(dat.rainDrop));
 		glLineWidth(GetWidthOfRainDrop(dat.rainDrop));
 
-		if (Falling == GetRainState(dat.rainDrop))
+		switch (GetRainState(dat.rainDrop))
 		{
-			GLdouble rainCoord[][3] = { 
-				{GetXCoord(dat.rainDrop), GetYCoord(dat.rainDrop), GetZCoord(dat.rainDrop)},
-				{GetXCoordEndPoint(dat.rainDrop), GetYCoordEndPoint(dat.rainDrop), GetZCoord(dat.rainDrop)} };//获取雨滴顶点坐标
-			/*绘制雨滴*/
-			glBegin(GL_LINES);
-			glVertex3dv(rainCoord[1]);
-			glVertex3dv(rainCoord[0]);
-			glEnd();
-
-			if (TRUE == IsTouchWater(dat.rainDrop))//根据落水坐标判断是否该转换成生成涟漪的状态
+			case Falling : 
 			{
-				ChangeRainStateToMelting(dat.rainDrop);
-				//Beep(500, 30);//水滴有声
-			}
-				
-			UpdateListNode(&L, i, increaseCoord);//更新结点数据
-			UpdateSlope(dat.rainDrop, windSpeed);//更新风速
-		}
-		else if (Melting == GetRainState(dat.rainDrop))
-		{
-			/*绘制涟漪*/
-			glPushMatrix();
-			glTranslated(GetXCoord(dat.rainDrop), GetYCoord(dat.rainDrop), GetZCoord(dat.rainDrop));//设置相对坐标系使涟漪在雨滴下落处生成
-			glRotatef(90.0, 1.0, 0.0, 0.0);
-			DrawCircle(GetCurrentRadius(dat.ripple));
-			glPopMatrix();
-			UpdateRippleRadius(dat.ripple, increaseRadius);//更新涟漪半径
+				GLdouble rainCoord[][3] = {
+					{ GetXCoord(dat.rainDrop), GetYCoord(dat.rainDrop), GetZCoord(dat.rainDrop) },
+					{ GetXCoordEndPoint(dat.rainDrop), GetYCoordEndPoint(dat.rainDrop), GetZCoord(dat.rainDrop) } };//获取雨滴顶点坐标
+																													/*绘制雨滴*/
+				glBegin(GL_LINES);
+				glVertex3dv(rainCoord[1]);
+				glVertex3dv(rainCoord[0]);
+				glEnd();
 
-			if (TRUE == IsRadiusEqualToMax(dat.ripple))//判断是否更新结点状态
+				if (TRUE == IsTouchWater(dat.rainDrop))//根据落水坐标判断是否接触到水平面
+				{
+					int i;
+					for (i = 0; i < MAX_NUM_OF_LEAVES; ++i)//判断是否接触到荷叶
+					{
+						if (TRUE == IsInEllipse(dat.rainDrop, leaves[i].x, leaves[i].z, leaves[i].curvature, leaves[i].radius))
+						{
+							timesOfImpacting++;
+							ChangeRainStateToImpacting(dat.rainDrop);
+							UpdateSlope(dat.rainDrop, -windSpeed);//风速取反，则表示向反斜率方向运动
+							break;
+						}
+					}
+
+					if (MAX_NUM_OF_LEAVES == i)//否则就直接进水
+						ChangeRainStateToMelting(dat.rainDrop);
+					//Beep(rand() % 30000, 10);//水滴有声
+				}
+
+				UpdateListNode(&L, i, increaseCoord);//更新结点数据
+				UpdateSlope(dat.rainDrop, windSpeed);//更新风速
+			}break;
+
+			case Impacting :
 			{
-				ChangeRainStateToDying(dat.rainDrop);
-				//for (int j = 0; j < density && rand() % 1000 > 980; ++j)//预置雨滴
-				//{
-				//	CreateData(&dat, windSpeed);
-				//	InseartList(&L, dat);
-				//}
-			}
-				
-		}
-		else if (Dying == GetRainState(dat.rainDrop))
-		{
-			DeleteList(&L, i);
-			
-		/*	increaseCoord = L.num * 0.01 + 0.3;
-			increaseRadius = L.num * 0.0001 + 0.03;*/
+				GLdouble rainCoord[][3] = {
+					{ GetXCoord(dat.rainDrop), GetYCoord(dat.rainDrop), GetZCoord(dat.rainDrop) },
+					{ GetXCoordEndPoint(dat.rainDrop), GetYCoordEndPoint(dat.rainDrop), GetZCoord(dat.rainDrop) } };//获取雨滴顶点坐标
+																													/*绘制雨滴*/
+				glBegin(GL_LINES);
+				glVertex3dv(rainCoord[1]);
+				glVertex3dv(rainCoord[0]);
+				glEnd();
+				UpdateListNode(&L, i, -increaseCoord);//更新结点数据
+				UpdateSlope(dat.rainDrop, -windSpeed);
+				if (TRUE == IsBeingHighest(dat.rainDrop))
+					ChangeRainStateToDying(dat.rainDrop);
+			}break;
+
+			case Melting :
+			{
+				/*绘制涟漪*/
+				glPushMatrix();
+				glTranslated(GetXCoord(dat.rainDrop), GetYCoord(dat.rainDrop), GetZCoord(dat.rainDrop));//设置相对坐标系使涟漪在雨滴下落处生成
+				glRotatef(90.0, 1.0, 0.0, 0.0);
+				DrawCircle(GetCurrentRadius(dat.ripple));
+				glPopMatrix();
+				UpdateRippleRadius(dat.ripple, increaseRadius);//更新涟漪半径
+
+				if (TRUE == IsRadiusEqualToMax(dat.ripple))//判断涟漪半径达到最大值
+				{
+					ChangeRainStateToDying(dat.rainDrop);
+				}
+			}break;
+
+			case Dying :
+			{
+				DeleteList(&L, i);
+			}break;
 		}
 	}
 	
@@ -395,6 +556,16 @@ void DisplayControlScreen(void)
 		glColor3f(0.3, 0.3, 0.7);
 		drawstr(buttonCoord[i][0] + 2, buttonCoord[i][3] - GAP * 0.5, str[i]);
 	}
+
+	//显示狂风按钮
+	glColor3f(0.9, 0.9, 0.9);
+	glRectd(buttonCoord[7][0], buttonCoord[7][1], buttonCoord[7][2], buttonCoord[7][3]);
+	if (IsWildWind)
+		glColor3f(0.9, 0.1, 0.1);
+	else
+		glColor3f(0.1, 0.8, 0.1);
+	drawstr(buttonCoord[7][0] + 2, buttonCoord[7][3] - GAP * 0.5, "WildWind");//狂风时显示红色，否则显示绿色
+
 	if (buttonIndex)
 	{
 		glColor3f(1.0, 1.0, 0.1);
@@ -403,11 +574,21 @@ void DisplayControlScreen(void)
 
 	/*显示镜头坐标*/
 	glColor3f(0.0, 0.0, 0.0);
-	drawstr(12, subHeight - 300, "Number Of Rain: %d", L.num);
+	drawstr(12, subHeight - 500, "Number Of Thunders:");
+	drawstr(12, subHeight - 450, "Times Of Impacting:");
+	drawstr(12, subHeight - 400, "MoveSpeed:");
+	drawstr(12, subHeight - 350, "WindSpeed:");
+	drawstr(12, subHeight - 300, "Number Of Rain:");
 	drawstr(12, subHeight - 250, "rainFallingSpeed:");
 	drawstr(12, subHeight - 200, "eyes:");
 	drawstr(12, subHeight - 100, "at:");
+
 	glColor3f(0.2, 0.2, 0.7);
+	drawstr(12 + GAP, subHeight - 500 + 25, "%d", thunders.numOfThunder);
+	drawstr(12 + GAP, subHeight - 450 + 25, "%d", timesOfImpacting);
+	drawstr(12 + GAP, subHeight - 400 + 25, "%.2f", moveSpeed);
+	drawstr(12 + GAP, subHeight - 350 + 25, "%.2f", windSpeed);
+	drawstr(12 + GAP, subHeight - 300 + 25, "%d", L.num);
 	drawstr(12 + GAP, subHeight - 250 + 25, "%.2f", increaseCoord);
 	drawstr(12 + GAP, subHeight - 200 + 25, "X:%.2f", eye[0]);
 	drawstr(12 + GAP, subHeight - 200 + 45, "Y:%.2f", eye[1]);
@@ -430,6 +611,14 @@ void DisplayControlScreen(void)
 *****************************************************************************************/
 void Idle(void)
 {
+	timeCount++;
+	if (timeCount == TIME_COUNT)
+	{
+		if (IsWildWind)
+			windSpeed = 10.0 - rand() % 1000 * 0.02;
+
+		timeCount = 0;
+	}
 	glutSetWindow(rainWindow);
 	glutPostRedisplay();
 	glutSetWindow(controlWindow);
@@ -492,7 +681,6 @@ void KeyBoard(unsigned char key, int x, int y)
 			RedisplayAll();
 			break;
 		case '+'://雨滴下落加速
-			if(increaseCoord < 4.9)
 			increaseCoord += 0.1;
 			break;
 		case '-'://雨滴下落减速
@@ -547,11 +735,15 @@ void MouseMotion(int button, int state, int x, int y)
 			if (y >= buttonCoord[0][1] && y <= buttonCoord[0][3])//第一行按钮
 			{
 				buttonIndex = 1;
+				IsThunder = 1;
+				InsertThundersList(&thunders);
+				if (NULL == PlaySound(TEXT("E:\\OpenGL\\VS\\rain_bow\\thunder.wav"), NULL, SND_FILENAME | SND_ASYNC))//异步播放音乐
+					printf("NULL");
 			}
 			else if (y >= buttonCoord[1][1] && y <= buttonCoord[1][3])//第二行按钮
 			{
 				buttonIndex = 2;
-				if (moveSpeed >= 0.2)
+				if (moveSpeed - 0.1 >= 0.0001)
 					moveSpeed -= 0.1;
 				if (rotateSpeed > PI / 180)
 					rotateSpeed -= PI / 24;
@@ -594,6 +786,10 @@ void MouseMotion(int button, int state, int x, int y)
 					CreateData(&dat, windSpeed);
 					InseartList(&L, dat);
 				}
+			}
+			else if (y >= buttonCoord[7][1] && y <= buttonCoord[7][3])
+			{
+				IsWildWind = !IsWildWind;
 			}
 		}
 		RedisplayAll();

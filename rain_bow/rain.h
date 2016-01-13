@@ -212,6 +212,9 @@ double GetYCoordEndPoint(RainDrop *rainDrop);
 *****************************************************************************************/
 Status IsTouchWater(RainDrop * rainDrop);
 
+//判断是否达到最高点
+Status IsBeingHighest(RainDrop *rainDrop);
+
 /****************************************************************************************
 *@Name............: double GetWidthOfRainDrop(RainDrop *rainDrop)
 *@Description.....: 获取雨滴宽度
@@ -293,6 +296,16 @@ RainState GetRainState(RainDrop *rainDrop);
 void ChangeRainStateToMelting(RainDrop *rainDrop);
 
 /****************************************************************************************
+*@Name............: void ChangeRainStateToImpacting(RainDrop *rainDrop)
+*@Description.....: 改变雨滴状态为触碰荷叶状态
+*@Parameters......: rainDrop	:雨滴结构体
+*@Return values...: 无
+*@PreCondition....：无
+*@PostCondition...：在雨碰到荷叶后应溅起，故为碰撞后状态
+*****************************************************************************************/
+void ChangeRainStateToImpacting(RainDrop *rainDrop);
+
+/****************************************************************************************
 *@Name............: void ChangeRainStateToDying(RainDrop *rainDrop)
 *@Description.....: 改变雨滴状态为消逝状态
 *@Parameters......: rainDrop	:雨滴结构体
@@ -301,6 +314,7 @@ void ChangeRainStateToMelting(RainDrop *rainDrop);
 *@PostCondition...：涟漪扩散后应消失，从而可以删除该雨滴结点
 *****************************************************************************************/
 void ChangeRainStateToDying(RainDrop *rainDrop);
+
 /****************************************************************************************
 *@Name............: double GetRippleMinRadius(Ripple *ripple)
 *@Description.....: 获取雨滴涟漪最小半径
@@ -341,4 +355,17 @@ double GetCurrentRadius(Ripple *ripple);
 *****************************************************************************************/
 Status IsRadiusEqualToMax(Ripple *ripple);
 
+/****************************************************************************************
+*@Name............: Status IsInEllipse(RainDrop *rainDrop, double xCoord, double zCoord, double curvature)
+*@Description.....: 判断当前雨滴是否在荷叶内，即椭圆内，运用公式（x-x1)^2/A^2+(y-y1)^2/B^2=1
+*@Parameters......: rainDrop	:雨滴结构体
+*					xCoord		:荷叶x坐标
+*					zCoord		:荷叶z坐标
+*					curvature	:荷叶的曲率
+*@Return values...: TURE		:确实在里面
+*					FALSE		:不在里面
+*@PreCondition....：无
+*@PostCondition...：无
+*****************************************************************************************/
+Status IsInEllipse(RainDrop *rainDrop, double xCoord, double zCoord, double curvature, double radius);
 #endif

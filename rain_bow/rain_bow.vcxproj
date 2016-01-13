@@ -151,12 +151,14 @@
     <ClCompile Include="list.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="rain.c" />
+    <ClCompile Include="thunder.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="displayOthers.h" />
     <ClInclude Include="drawRain.h" />
     <ClInclude Include="list.h" />
     <ClInclude Include="rain.h" />
+    <ClInclude Include="thunder.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

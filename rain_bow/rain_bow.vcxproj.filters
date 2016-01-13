@@ -30,6 +30,9 @@
     <ClCompile Include="displayOthers.c">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="thunder.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="list.h">
@@ -42,6 +45,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="displayOthers.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="thunder.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
