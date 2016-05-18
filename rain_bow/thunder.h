@@ -37,23 +37,26 @@
 /****************************************************************************************
 *	Struct Define Section
 ****************************************************************************************/
-
+//闪电结点
 typedef struct ThunderNode {
 	struct ThunderNode *next;	//下一位指针
 	double Coord[3];			//闪电结点坐标
 }ThunderNode;
 
+//闪电结点链表
 typedef struct ThunderNodeList {
 	int numOfNode;				//结点数
 	ThunderNode *head;			//指向闪电头结点
 }ThunderNodeList;
 
+//闪电分支
 typedef struct ThunderTree {
 	ThunderNodeList *head;		//指向闪电分支结点
 	struct ThunderTree *next;	//指向下一个分支
 	double Coord[3];			//闪电结点坐标
 }ThunderTree;
 
+//闪电分支链表
 typedef struct ThunderTreeList {
 	ThunderTree *head;			//指向闪电第一分支
 	int numOfTree;				//单棵闪电分支的数量
@@ -62,11 +65,13 @@ typedef struct ThunderTreeList {
 	int flag;					//绘制闪电或消灭闪电的标志
 }ThunderTreeList;
 
+//记录一棵闪电所有结点的链表
 typedef struct ThunderList {
 	ThunderTreeList *head;		//指向闪电树的头结点
 	struct ThunderList *next;	//指向下一棵闪电
 }ThunderList;
 
+//记录多棵闪电的链表
 typedef struct Thunders {
 	int numOfThunder;			//闪电的数量
 	ThunderList *head;			//指向第一个闪电

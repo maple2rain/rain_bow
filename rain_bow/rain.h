@@ -41,11 +41,11 @@
 /*****************************************************************************************
 *	Struct Define Section
 *****************************************************************************************/
-//雨的三种状态
+//雨的四种状态
 typedef enum RainState {
 	Falling,	//下降过程中
 	Melting,	//融于水的过程中
-	Impacting,	//碰撞
+	Impacting,	//与荷叶碰撞
 	Dying		//已经和水化为一体
 }RainState;
 
@@ -314,6 +314,16 @@ void ChangeRainStateToImpacting(RainDrop *rainDrop);
 *@PostCondition...：涟漪扩散后应消失，从而可以删除该雨滴结点
 *****************************************************************************************/
 void ChangeRainStateToDying(RainDrop *rainDrop);
+
+/****************************************************************************************
+*@Name............: void ChangeRainStateToFalling(RainDrop *rainDrop)
+*@Description.....: 改变雨滴状态为下落状态
+*@Parameters......: rainDrop	:雨滴结构体
+*@Return values...: 无
+*@PreCondition....：无
+*@PostCondition...：当雨滴碰撞到荷叶反弹到顶点时会下落
+*****************************************************************************************/
+void ChangeRainStateToFalling(RainDrop *rainDrop);
 
 /****************************************************************************************
 *@Name............: double GetRippleMinRadius(Ripple *ripple)

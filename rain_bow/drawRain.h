@@ -38,17 +38,20 @@
 #include <math.h>
 #include "displayOthers.h"
 #include "thunder.h"
+
 /****************************************************************************************
 *	Macro Define Section
 ****************************************************************************************/
 #define MAX_NUM_OF_NODE 1000	//初始时链表结点数
 #define MAX_NUM_OF_LEAVES 30	//荷叶数目
 #define SMOOTH_DEGREE 64		//涟漪光滑程度
+#define MAX_NUM_OF_MOUNT 20		//山的数目
 
 #define WINDOW_WIDTH 1590		//窗口宽度
 #define WINDOW_HEIGHT 830		//窗口高度
 
 typedef struct leave leave;
+typedef struct Mount Mount;
 /****************************************************************************************
 *	Prototype Declare Section
 ****************************************************************************************/
@@ -116,8 +119,14 @@ void DrawCircle(double radius);
 //设置荷叶属性
 void SetLeavesAttribute(leave leaves[], int num);
 
+//设置山的属性
+void SetMountAttribute(Mount mount[], int num);
+
 //绘制荷叶
 void DrawLeaves(leave leaves[]);
+
+//画山
+void DrawMountain(Mount mount);
 
 //绘制闪电
 void DrawThunder(Thunders *thunders);

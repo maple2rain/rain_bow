@@ -35,6 +35,15 @@ typedef struct leave {
 	int lineGap;		//荷叶黑线之间的间隔
 }leave;
 
+//山结构体
+typedef struct Mount {
+	float x;
+	float z;
+	double radius;			//半径
+	double curvature;		//曲率
+	int direction;			//方向，表示前后左右
+	float mountAmbient[4];	//山的颜色属性
+}Mount;
 /*****************************************************************************************
 *	Global Variable Declare Section
 *****************************************************************************************/
@@ -48,7 +57,7 @@ const GLfloat local_view[] = { GL_TRUE };
 /*月亮属性*/
 GLfloat shininess[] = { 100.0 };
 const GLfloat moonEmission[] = { 0.0, 0.0, 0.0, 1.0 };
-const GLfloat moonAmbient[] = { 0.9, 0.9, 0.7, 1.0 };
+const GLfloat moonAmbient[] = { 0.9, 0.9, 0.8, 1.0 };
 const GLfloat moonDiffuse[] = { 0.5, 0.5, 0.5, 1.0 };
 const GLfloat moonSpecular[] = { 0.5, 0.5, 0.5, 1.0 };
 const GLfloat moonPosition [] = { -300.0, 300.0, -100.0, 0.0 };
@@ -63,6 +72,9 @@ const GLfloat leaveAmbient[] = { 0.2, 0.6, 0.2, 1.0 };
 const GLfloat leaveDiffuse[] = { 0.5, 0.5, 0.5, 1.0 };
 const GLfloat leaveSpecular[] = { 0.5, 0.5, 0.5, 1.0 };
 leave leaves[MAX_NUM_OF_LEAVES];
+
+//山的属性
+Mount mount[MAX_NUM_OF_MOUNT];
 
 //照相机属性
 double Θ = PI / 2;						//球坐标系旋转角度
@@ -129,7 +141,6 @@ void InitRainScreen(void)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-	glLineWidth(1.5);
 
 	/*设置光照属性*/
 	glLightfv(GL_LIGHT1, GL_AMBIENT, moonAmbient);
@@ -149,6 +160,8 @@ void InitRainScreen(void)
 	{
 		SetLeavesAttribute(leaves, MAX_NUM_OF_LEAVES);
 	}
+
+	SetMountAttribute(mount, MAX_NUM_OF_MOUNT);
 
 	InitThunderList(&thunders);
 }
@@ -269,6 +282,26 @@ void SetLeavesAttribute(leave leaves[], int num)
 	}
 }
 
+//设置山的属性
+void SetMountAttribute(Mount mount[], int num)
+{
+	for (int i = 0; i < num; ++i)
+	{
+		mount[i].mountAmbient[0] = 0.2;
+		mount[i].mountAmbient[1] = 0.6;
+		mount[i].mountAmbient[2] = 0.2;
+		mount[i].mountAmbient[3] = 1.0;
+		for (int j = 0; j < 3; ++j)
+		{
+			mount[i].mountAmbient[j] += 0.2 - rand() % 100 * 0.01;
+		}
+		mount[i].direction = rand() % 4;
+		mount[i].curvature = 0.3 + 0.01 * (rand() % 100);
+		mount[i].radius = (double)(rand() % 300);
+		mount[i].x = (float)(800 - rand() % 1600);
+		mount[i].z = (float)(800 - rand() % 1600);
+	}
+}
 //根据半径radius,曲率curvature及x、z坐标画实心椭圆
 void DrawSolidCircle(double x, double z, double radius, double curvature, int lineGap)
 {
@@ -303,6 +336,39 @@ void DrawSolidCircle(double x, double z, double radius, double curvature, int li
 	glPopMatrix();
 }
 
+//画山
+void DrawMountain(Mount mount)
+{
+	glPushMatrix();
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mount.mountAmbient);
+	switch (mount.direction)
+	{
+		case 0:
+			glTranslatef(800.0 + mount.radius / 100.0, -increaseCoord - 2.0, mount.z);
+			glRotatef(-90.0, 0.0, 1.0, 0.0);
+			break;
+
+		case 1:
+			glTranslatef(-800.0 + mount.radius / 100.0, -increaseCoord - 2.0, mount.z);
+			glRotatef(90.0, 0.0, 1.0, 0.0);
+			break;
+
+		case 2:
+			glTranslatef(mount.x, -increaseCoord - 2.0, 800.0 + mount.radius / 100.0);
+			break;
+
+		case 3:
+			glTranslatef(mount.x, -increaseCoord - 2.0, -800.0 + mount.radius / 100.0);
+			break;
+	}
+
+	glBegin(GL_TRIANGLE_FAN);//绘制半椭圆代替小山
+	for (int j = 0; j <= SMOOTH_DEGREE; ++j)
+		glVertex2f(mount.radius * cos(PI / SMOOTH_DEGREE * j), mount.radius * sin(PI / SMOOTH_DEGREE * j) / mount.curvature);
+	glEnd();
+	glPopMatrix();
+}
+
 //绘制荷叶
 void DrawLeaves(leave leaves[])
 {
@@ -322,7 +388,7 @@ void DrawMoon(void)
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, moonAmbient);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, moonEmission);
-	glutSolidSphere(10.0, 32, 32);//绘制一个较大的球体充当月亮
+	glutSolidSphere(25.0, 32, 32);//绘制一个较大的球体充当月亮
 	glPopMatrix();
 }
 
@@ -337,7 +403,7 @@ void DrawWater(void)
 	glTranslatef(0.0, -increaseCoord - 2.0, 0.0);
 	glRotatef(90.0, 1.0, 0.0, 0.0);
 	glNormal3f(0.0, 1.0, 0.0);
-	glRectd(-1000.0, -1000.0, 1000.0, 1000.0);
+	glRectd(-800.0, -800.0, 800.0, 800.0);
 	glPopMatrix();
 }
 
@@ -369,7 +435,7 @@ void DrawThunder(Thunders *thunders)
 				if (thunders->numOfThunder == 0)
 				{
 					IsThunder = 0;
-					if (NULL == PlaySound(TEXT("E:\\OpenGL\\VS\\rain_bow\\rain.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP))//异步播放音乐
+					if (NULL == PlaySound(TEXT("\\rain.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP))//异步播放音乐
 						printf("NULL");
 				}
 					
@@ -429,6 +495,11 @@ void DisplayRainScreen(void)
 	DrawMoon();//绘制月亮
 	DrawWater();//绘制水平面
 	DrawLeaves(leaves);//绘制椭圆代替荷叶，需要计算椭圆中心以便求得雨滴是否与其碰撞
+	for (int i = 0; i < MAX_NUM_OF_MOUNT; ++i)
+	{
+		DrawMountain(mount[i]);
+	}
+	
 	if (IsThunder)
 		DrawThunder(&thunders);
 
@@ -473,13 +544,14 @@ void DisplayRainScreen(void)
 							timesOfImpacting++;
 							ChangeRainStateToImpacting(dat.rainDrop);
 							UpdateSlope(dat.rainDrop, -windSpeed);//风速取反，则表示向反斜率方向运动
+							Beep(500, 15);//触碰荷叶有声
 							break;
 						}
 					}
 
 					if (MAX_NUM_OF_LEAVES == i)//否则就直接进水
 						ChangeRainStateToMelting(dat.rainDrop);
-					//Beep(rand() % 30000, 10);//水滴有声
+					
 				}
 
 				UpdateListNode(&L, i, increaseCoord);//更新结点数据
@@ -488,18 +560,21 @@ void DisplayRainScreen(void)
 
 			case Impacting :
 			{
+				if (TRUE == IsBeingHighest(dat.rainDrop))
+				{
+					ChangeRainStateToDying(dat.rainDrop);
+				}
 				GLdouble rainCoord[][3] = {
 					{ GetXCoord(dat.rainDrop), GetYCoord(dat.rainDrop), GetZCoord(dat.rainDrop) },
 					{ GetXCoordEndPoint(dat.rainDrop), GetYCoordEndPoint(dat.rainDrop), GetZCoord(dat.rainDrop) } };//获取雨滴顶点坐标
 																													/*绘制雨滴*/
 				glBegin(GL_LINES);
-				glVertex3dv(rainCoord[1]);
 				glVertex3dv(rainCoord[0]);
+				glVertex3dv(rainCoord[1]);
 				glEnd();
 				UpdateListNode(&L, i, -increaseCoord);//更新结点数据
 				UpdateSlope(dat.rainDrop, -windSpeed);
-				if (TRUE == IsBeingHighest(dat.rainDrop))
-					ChangeRainStateToDying(dat.rainDrop);
+				
 			}break;
 
 			case Melting :
@@ -612,7 +687,7 @@ void DisplayControlScreen(void)
 void Idle(void)
 {
 	timeCount++;
-	if (timeCount == TIME_COUNT)
+	if (timeCount == TIME_COUNT)//定时改变风速
 	{
 		if (IsWildWind)
 			windSpeed = 10.0 - rand() % 1000 * 0.02;
@@ -737,7 +812,7 @@ void MouseMotion(int button, int state, int x, int y)
 				buttonIndex = 1;
 				IsThunder = 1;
 				InsertThundersList(&thunders);
-				if (NULL == PlaySound(TEXT("E:\\OpenGL\\VS\\rain_bow\\thunder.wav"), NULL, SND_FILENAME | SND_ASYNC))//异步播放音乐
+				if (NULL == PlaySound(TEXT("\\thunder.wav"), NULL, SND_FILENAME | SND_ASYNC))//异步播放音乐
 					printf("NULL");
 			}
 			else if (y >= buttonCoord[1][1] && y <= buttonCoord[1][3])//第二行按钮
@@ -751,7 +826,7 @@ void MouseMotion(int button, int state, int x, int y)
 			else if (y >= buttonCoord[2][1] && y <= buttonCoord[2][3])//第三行按钮
 			{
 				buttonIndex = 3;
-				windSpeed -= 0.01;
+				windSpeed -= 0.05;
 			}
 			else if (y >= buttonCoord[3][1] && y <= buttonCoord[3][3])//第四行按钮
 			{
@@ -774,7 +849,7 @@ void MouseMotion(int button, int state, int x, int y)
 			else if (y >= buttonCoord[5][1] && y <= buttonCoord[5][3])//第二行按钮
 			{
 				buttonIndex = 6;
-				windSpeed += 0.01;
+				windSpeed += 0.05;
 			}
 			else if (y >= buttonCoord[6][1] && y <= buttonCoord[6][3])//第三行按钮
 			{

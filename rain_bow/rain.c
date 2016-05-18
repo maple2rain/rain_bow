@@ -441,6 +441,19 @@ void ChangeRainStateToDying(RainDrop *rainDrop)
 }
 
 /****************************************************************************************
+*@Name............: void ChangeRainStateToFalling(RainDrop *rainDrop)
+*@Description.....: 改变雨滴状态为下落状态
+*@Parameters......: rainDrop	:雨滴结构体
+*@Return values...: 无
+*@PreCondition....：无
+*@PostCondition...：当雨滴碰撞到荷叶反弹到顶点时会下落
+*****************************************************************************************/
+void ChangeRainStateToFalling(RainDrop *rainDrop)
+{
+	rainDrop->rainState = Falling;
+}
+
+/****************************************************************************************
 *@Name............: double GetRippleMinRadius(Ripple *ripple)
 *@Description.....: 获取雨滴涟漪最小半径
 *@Parameters......: ripple	:涟漪结构体
@@ -510,7 +523,7 @@ Status IsRadiusEqualToMax(Ripple *ripple)
 Status IsInEllipse(RainDrop *rainDrop, double xCoord, double zCoord, double curvature, double radius)
 {
 	double x = (xCoord - rainDrop->xCoord) / radius;
-	double z = (zCoord - rainDrop->zCoord) / curvature / radius;
+	double z = (zCoord - rainDrop->zCoord) * curvature / radius;
 
 	if ((x * x + z * z) - 1.0 <= 0.00001)
 		return TRUE;

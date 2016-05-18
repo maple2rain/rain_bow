@@ -30,9 +30,6 @@ GLuint GAP = (WINDOW_WIDTH * WINDOW_HEIGHT / 100000) + 12; //窗口之间的间隔
 
 int main(int argc, char **argv)
 {
-	if (NULL == PlaySound(TEXT("E:\\OpenGL\\VS\\rain_bow\\rain.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP))//异步播放音乐
-		printf("NULL");
-
 	glutInit(&argc, argv);
 	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutInitWindowPosition(0, 0);
@@ -56,6 +53,10 @@ int main(int argc, char **argv)
 	glutSpecialFunc(SpecialKeyBoard);
 
 	glutIdleFunc(Idle);
+
+	if (NULL == PlaySound(TEXT("secret.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP))//异步播放音乐
+		printf("NULL");
+
 	glutMainLoop();
 	
 	return EXIT_SUCCESS;
